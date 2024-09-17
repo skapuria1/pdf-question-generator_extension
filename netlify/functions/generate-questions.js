@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 exports.handler = async (event, context) => {
     // Define CORS headers
     const headers = {
-        'Access-Control-Allow-Origin': '*', // Change '*' to your specific origin in production
+        'Access-Control-Allow-Origin': '*', // Adjust this in production
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, GET, OPTIONS'
     };
@@ -20,7 +20,26 @@ exports.handler = async (event, context) => {
     // Handle the main request
     try {
         // Parse the incoming request body
-        const { pdfText } = JSON.parse(event.body);
+        let requestBody;
+        try {
+            requestBody = JSON.parse(event.body);
+        } catch (error) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Invalid JSON input' })
+            };
+        }
+
+        // Check if pdfText is provided
+        const { pdfText } = requestBody;
+        if (!pdfText) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'pdfText is required in the request body' })
+            };
+        }
 
         // Retrieve the GPT-4 Mini API key from Netlify environment variables
         const apiKey = process.env.GPT4_MINI_API_KEY;
