@@ -1,14 +1,14 @@
 const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
-    // Add CORS headers to the response
+    // Define CORS headers
     const headers = {
-        'Access-Control-Allow-Origin': '*', // Allow all origins for testing, restrict to specific origin in production
+        'Access-Control-Allow-Origin': '*', // Change '*' to your specific origin in production
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, GET, OPTIONS'
     };
 
-    // Handle preflight requests
+    // Handle preflight (OPTIONS) request
     if (event.httpMethod === 'OPTIONS') {
         return {
             statusCode: 200,
@@ -17,11 +17,14 @@ exports.handler = async (event, context) => {
         };
     }
 
-    // Parse the request body to get the PDF text
-    const { pdfText } = JSON.parse(event.body);
-    const apiKey = process.env.GPT4_MINI_API_KEY;
-
+    // Handle the main request
     try {
+        // Parse the incoming request body
+        const { pdfText } = JSON.parse(event.body);
+
+        // Retrieve the GPT-4 Mini API key from Netlify environment variables
+        const apiKey = process.env.GPT4_MINI_API_KEY;
+
         // Call the GPT-4 Mini API
         const response = await fetch('https://api.gpt4mini.com/v1/generate', {
             method: 'POST',
