@@ -22,6 +22,4 @@ exports.handler = async (event, context) => {
         statusCode: 200,
         body: JSON.stringify(data)
     };
-
-    //  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
 };
