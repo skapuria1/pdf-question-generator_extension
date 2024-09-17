@@ -13,7 +13,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
     const text = await extractTextFromPdf(file);
 
     // Send the text to the Netlify function
-    const response = await fetch('https://your-netlify-function-url/.netlify/functions/generate-questions', {
+    const response = await fetch('https://studyguidegenerator.netlify.app//.netlify/functions/generate-questions', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
