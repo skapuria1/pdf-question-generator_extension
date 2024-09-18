@@ -10,14 +10,21 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
         return;
     }
 
+    const numFlashcardsInput = document.getElementById('numFlashcards'); // Get the input field for number of flashcards
+
+    // Validate the number of flashcards
+    const numOfFlashcards = parseInt(numFlashcardsInput.value, 10);
+    if (isNaN(numOfFlashcards) || numOfFlashcards <= 0) {
+        alert('Please enter a valid number of flashcards.');
+        return;
+    }
+
     // Extract text from the PDF using PDF.js
     try {
         const file = fileInput.files[0];
         const text = await extractTextFromPdf(file);
         console.log('Extracted text:', text); // Debugging output
 
-        // Ask the user for the number of flashcards
-        const numOfFlashcards = prompt("How many flashcards would you like to generate?", 5);
 
         // Send the text to the Netlify function
         const response = await fetch('https://studyguidegenerator.netlify.app/.netlify/functions/generate-questions', {
