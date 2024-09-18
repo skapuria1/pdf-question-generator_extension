@@ -17,7 +17,12 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
         console.log('Extracted text:', text); // Debugging output
 
         // Ask the user for the number of flashcards
-        const numOfFlashcards = prompt("How many flashcards would you like to generate?", 5);
+        const numOfFlashcards = parseInt(prompt("How many flashcards would you like to generate?", "5"), 10);
+
+        if (isNaN(numOfFlashcards) || numOfFlashcards <= 0) {
+            alert('Please enter a valid number of flashcards.');
+            return;
+        }
 
         // Send the text to the Netlify function
         const response = await fetch('https://studyguidegenerator.netlify.app/.netlify/functions/generate-questions', {
@@ -25,7 +30,10 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ pdfText: text, numOfFlashcards: numOfFlashcards })
+            body: JSON.stringify({ 
+                pdfText: text, 
+                numOfFlashcards: numOfFlashcards 
+            })
         });
 
         console.log('Response status:', response.status); // Debugging output
@@ -36,8 +44,9 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
         const data = await response.json();
         console.log('Response data:', data); // Debugging output
 
-        if (!Array.isArray(data.flashcards)) {
-            throw new Error('Invalid response format: Expected data.flashcards to be an array of flashcards');
+        // Check if 'flashcards' is an array and contains the expected structure
+        if (!Array.isArray(data.flashcards) || data.flashcards.length === 0) {
+            throw new Error('Invalid response format: Expected an array of flashcards');
         }
 
         // Generate the flashcards HTML
@@ -50,7 +59,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
         } else {
             viewInBrowser(flashcardsHtml);
         }
-        
+
     } catch (error) {
         console.error('Error generating flashcards:', error);
         document.getElementById('output').innerText = `Error generating flashcards: ${error.message}`;
@@ -58,13 +67,9 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
 });
 
 // Function to generate flashcards HTML
-function generateFlashcardsHtml(questions) {
-    if (!questions || !Array.isArray(questions)) {
-        return '<p>Error: Invalid questions data received from the server.</p>';
-    }
-
-    let flashcardsData = questions.map((q, index) => `
-        { question: '${q.question || 'No question provided'}', answer: '${q.answer || 'No answer provided'}' }`
+function generateFlashcardsHtml(flashcards) {
+    let flashcardsData = flashcards.map((fc, index) => `
+        { question: '${fc.question}', answer: '${fc.answer}' }`
     ).join(',');
 
     return `
@@ -90,10 +95,10 @@ function generateFlashcardsHtml(questions) {
         </div>
         <div class="navigation">
             <button class="nav-button" id="prevBtn" onclick="prevCard()">Previous</button>
-            <button class="nav-button" id="nextBtn">Next</button>
+            <button class="nav-button" id="nextBtn" onclick="nextCard()">Next</button>
         </div>
         <div class="question-list">
-            ${questions.map((q, index) => `<div onclick="goToCard(${index})">${index + 1}. ${q.question}</div>`).join('')}
+            ${flashcards.map((fc, index) => `<div onclick="goToCard(${index})">${index + 1}. ${fc.question}</div>`).join('')}
         </div>
     </div>
 
@@ -149,7 +154,6 @@ function generateFlashcardsHtml(questions) {
 `;
 }
 
-
 // Function to prompt user to download HTML
 function downloadHtmlFile(htmlContent) {
     const blob = new Blob([htmlContent], { type: 'text/html' });
@@ -167,6 +171,7 @@ function viewInBrowser(htmlContent) {
     newWindow.document.write(htmlContent);
     newWindow.document.close();
 }
+
 // Function to extract text from the PDF file using PDF.js
 async function extractTextFromPdf(file) {
     return new Promise((resolve, reject) => {
@@ -180,7 +185,7 @@ async function extractTextFromPdf(file) {
                     const page = await pdf.getPage(i);
                     const content = await page.getTextContent();
                     const pageText = content.items.map(item => item.str).join(' ');
-                    console.log(`Page ${i} text:`, pageText); // Debugging output
+                    console.log(`Page ${i} text:`, pageText);
                     text += pageText + ' ';
                 }
                 resolve(text);
