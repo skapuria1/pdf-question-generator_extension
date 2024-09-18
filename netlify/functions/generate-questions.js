@@ -4,75 +4,93 @@ exports.handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS'
     };
 
     if (event.httpMethod === 'OPTIONS') {
         return {
             statusCode: 200,
             headers,
-            body: '',
+            body: ''
         };
     }
 
     try {
         const { pdfText, numOfFlashcards } = JSON.parse(event.body);
 
-        const apiKey = process.env.GPT4_MINI_API_KEY;
-        if (!apiKey) {
-            throw new Error('Missing API key');
+        if (!pdfText || !numOfFlashcards) {
+            console.error('Invalid input data.');
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Invalid input data.' })
+            };
         }
 
-        // API request to GPT-4o Mini for generating flashcards
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        // Adjust this prompt as needed for better responses
+        const prompt = `Generate ${numOfFlashcards} flashcards with questions and answers based on the following content: "${pdfText}". Provide each in the format: "Q: question?" "A: answer"`;
+
+        // Make a request to GPT-4 Mini API
+        const response = await fetch('https://api.openai.com/v1/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
+                'Authorization': `Bearer ${process.env.GPT4_MINI_API_KEY}`
             },
             body: JSON.stringify({
                 model: 'gpt-4o-mini',
-                messages: [
-                    {
-                        "role": "system",
-                        "content": "You are a helpful assistant that generates flashcards for exam preparation."
-                    },
-                    {
-                        "role": "user",
-                        "content": `Generate ${numOfFlashcards} flashcards with questions and answers based on the following content: "${pdfText}". Provide each in the format: "Q: [question]" "A: [answer]"`
-                    }
-                ],
+                prompt: prompt,
                 max_tokens: 500
             })
         });
 
         if (!response.ok) {
-            throw new Error(`Error with GPT-4o Mini API: ${response.statusText}`);
+            const errorText = await response.text();
+            console.error('Error with GPT-4 Mini API request:', errorText);
+            throw new Error(`Error with GPT-4 Mini API: ${response.statusText}`);
         }
 
         const data = await response.json();
-        const generatedContent = data.choices[0].message.content.trim();
+        console.log('API response:', data);
 
-        // Parse the response into a usable format
-        const flashcards = generatedContent.split('\n').map(item => {
-            const [question, answer] = item.split('A:');
+        // Check if data is structured as expected
+        if (!data.choices || data.choices.length === 0) {
+            console.error('Unexpected API response structure:', data);
             return {
-                question: question.replace('Q:', '').trim(),
-                answer: answer.trim(),
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({ error: 'Unexpected API response structure.' })
             };
-        }).filter(card => card.question && card.answer);
+        }
+
+        // Process the response into flashcards
+        const flashcards = data.choices[0].text
+            .split('\n')
+            .filter(line => line.trim() !== '') // Ignore empty lines
+            .map(line => {
+                const parts = line.split('Q:');
+                if (parts.length < 2) {
+                    return { question: '', answer: line.trim() }; // Only answer provided
+                }
+                return {
+                    question: 'Q: ' + parts[1].split('A:')[0].trim(),
+                    answer: 'A: ' + (parts[1].split('A:')[1] || '').trim()
+                };
+            });
+
+        console.log('Processed flashcards:', flashcards);
 
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ flashcards }),
+            body: JSON.stringify({ flashcards })
         };
     } catch (error) {
-        console.error('Error generating flashcards:', error.message);
+        console.error('Internal Server Error:', error);
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: error.message }),
+            body: JSON.stringify({ error: error.message })
         };
     }
 };
