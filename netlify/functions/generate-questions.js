@@ -50,11 +50,13 @@ exports.handler = async (event, context) => {
         }
 
         const data = await response.json();
+        console.log('Full API response:', data); // Log the full response for debugging
 
+        // Return the entire response for inspection
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ confirmation: data.choices[0].message.content.trim() })
+            body: JSON.stringify({ confirmation: data })
         };
     } catch (error) {
         console.error('Internal Server Error:', error.message);
