@@ -17,12 +17,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
         console.log('Extracted text:', text); // Debugging output
 
         // Ask the user for the number of flashcards
-        const numOfFlashcards = parseInt(prompt("How many flashcards would you like to generate?", "5"), 10);
-
-        if (isNaN(numOfFlashcards) || numOfFlashcards <= 0) {
-            alert('Please enter a valid number of flashcards.');
-            return;
-        }
+        const numOfFlashcards = prompt("How many flashcards would you like to generate?", 5);
 
         // Send the text to the Netlify function
         const response = await fetch('https://studyguidegenerator.netlify.app/.netlify/functions/generate-questions', {
@@ -30,9 +25,10 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
-                pdfText: text, 
-                numOfFlashcards: numOfFlashcards 
+            body: JSON.stringify({
+                pdfText: text,
+                numOfFlashcards: numOfFlashcards,
+                prompt: `Generate ${numOfFlashcards} flashcards with questions and answers based on the following content: "${text}". Provide each in the format: "Q: question?" "A: answer"`
             })
         });
 
@@ -44,14 +40,9 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
         const data = await response.json();
         console.log('Response data:', data); // Debugging output
 
-        // Check if 'flashcards' is an array and contains the expected structure
-        if (!Array.isArray(data.flashcards) || data.flashcards.length === 0) {
-            throw new Error('Invalid response format: Expected an array of flashcards');
-        }
-
         // Generate the flashcards HTML
         const flashcardsHtml = generateFlashcardsHtml(data.flashcards);
-
+        
         // Give the user an option to download or view the HTML
         const download = confirm("Flashcards generated. Would you like to download them?");
         if (download) {
@@ -59,7 +50,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
         } else {
             viewInBrowser(flashcardsHtml);
         }
-
+        
     } catch (error) {
         console.error('Error generating flashcards:', error);
         document.getElementById('output').innerText = `Error generating flashcards: ${error.message}`;
@@ -68,9 +59,10 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
 
 // Function to generate flashcards HTML
 function generateFlashcardsHtml(flashcards) {
-    let flashcardsData = flashcards.map((fc, index) => `
-        { question: '${fc.question}', answer: '${fc.answer}' }`
-    ).join(',');
+    let flashcardsData = flashcards.map((fc, index) => `{
+        question: '${fc.question}',
+        answer: '${fc.answer}'
+    }`).join(',');
 
     return `
 <!DOCTYPE html>
@@ -78,7 +70,95 @@ function generateFlashcardsHtml(flashcards) {
 <head>
     <title>Flashcards</title>
     <style>
-        /* Your CSS from flashcards.html */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .flashcard-container {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            perspective: 1000px;
+        }
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+            cursor: pointer;
+        }
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .flashcard-front {
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
+        .flashcard-back {
+            background-color: #4CAF50;
+            color: white;
+            transform: rotateY(180deg);
+            border: 1px solid #4CAF50;
+        }
+        .navigation {
+            margin-top: 20px;
+        }
+        .nav-button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .nav-button:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+        .question-list {
+            margin-top: 30px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            width: 300px;
+            text-align: left;
+            background-color: #fff;
+        }
+        .question-list div {
+            cursor: pointer;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .question-list div:hover {
+            background-color: #f1f1f1;
+        }
     </style>
 </head>
 <body>

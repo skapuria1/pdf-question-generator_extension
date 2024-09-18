@@ -42,7 +42,7 @@ exports.handler = async (event, context) => {
                 model: 'gpt-4o-mini',
                 messages: [
                     { role: "system", content: "You are a helpful assistant." },
-                    { role: "user", content: `Generate ${numOfFlashcards} flashcards with questions and answers based on the following content: "${pdfText}". Provide each in the format: "Q: question?" "A: answer"` }
+                    { role: "user", content: `Generate ${numOfFlashcards} flashcards with questions and answers based on the following content: "${pdfText}". ONLY provide each in the format: "Q: [question?] A: [answer]"` }
                 ],
                 max_tokens: 1000
             })
