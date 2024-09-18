@@ -18,13 +18,17 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
         const text = await extractTextFromPdf(file);
         console.log('Extracted text:', text); // Debugging output
 
+        // Prepare the payload
+        const payload = JSON.stringify({ pdfText: text });
+        console.log('Payload:', payload); // Debugging output
+
         // Send the text to the Netlify function
         const response = await fetch('https://studyguidegenerator.netlify.app/.netlify/functions/generate-questions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ pdfText: text })
+            body: payload
         });
 
         console.log('Response status:', response.status); // Debugging output
@@ -41,6 +45,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
         document.getElementById('output').innerText = `Error generating questions: ${error.message}`;
     }
 });
+
 
 
 
