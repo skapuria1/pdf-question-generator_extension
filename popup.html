@@ -1,19 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>AI PDF Question Generator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Flashcard Generator</title>
     <link rel="stylesheet" href="popup.css">
-    <!-- Include the local copy of PDF.js -->
-    <script src="libs/pdf.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>PDF Question Generator</h1>
-        <button id="readTabBtn">Read PDF from Current Tab</button>
-        <input type="file" id="uploadPdf" accept=".pdf">
-        <button id="uploadBtn">Upload PDF</button>
-        <div id="output"></div>
-    </div>
+    <h1>PDF Flashcard Generator</h1>
+    <input type="file" id="uploadPdf" accept=".pdf">
+    <input type="number" id="flashcardCount" placeholder="Number of flashcards" min="1">
+    <button id="uploadBtn">Generate Flashcards</button>
+    
+    <div id="output"></div>
+    <div class="flashcard-container"></div>
+
+    <script src="libs/pdf.js"></script>
     <script src="popup.js"></script>
 </body>
 </html>

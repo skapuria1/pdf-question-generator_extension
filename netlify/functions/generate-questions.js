@@ -17,6 +17,7 @@ exports.handler = async (event, context) => {
 
     try {
         const apiKey = process.env.GPT4_MINI_API_KEY;
+        const { pdfText, numFlashcards } = JSON.parse(event.body);
 
         if (!apiKey) {
             console.error('Error: Missing API key.');
@@ -37,9 +38,9 @@ exports.handler = async (event, context) => {
                 model: 'gpt-4o-mini',
                 messages: [
                     { "role": "system", "content": "You are a helpful assistant." },
-                    { "role": "user", "content": "This is a connection test. Please confirm." }
+                    { "role": "user", "content": `Generate ${numFlashcards} flashcards with questions and answers based on the following text: ${pdfText}` }
                 ],
-                max_tokens: 10
+                max_tokens: 1000
             })
         });
 
@@ -50,13 +51,14 @@ exports.handler = async (event, context) => {
         }
 
         const data = await response.json();
-        console.log('Full API response:', data); // Log the full response for debugging
 
-        // Return the entire response for inspection
+        // Assuming GPT-4 Mini response structure is in data.choices[0].message.content
+        const flashcards = JSON.parse(data.choices[0].message.content); // This assumes GPT returns JSON formatted flashcards
+
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ confirmation: data })
+            body: JSON.stringify({ questions: flashcards })
         };
     } catch (error) {
         console.error('Internal Server Error:', error.message);
