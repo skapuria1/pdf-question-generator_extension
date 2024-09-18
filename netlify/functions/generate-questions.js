@@ -16,7 +16,7 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const apiKey = process.env.GPT4O_MINI_API_KEY;
+        const apiKey = process.env.GPT4_MINI_API_KEY;
 
         if (!apiKey) {
             console.error('Error: Missing API key.');
