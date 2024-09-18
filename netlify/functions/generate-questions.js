@@ -39,7 +39,7 @@ exports.handler = async (event) => {
                     },
                     {
                         "role": "user",
-                        "content": `Generate ${numOfFlashcards} flashcards with questions and answers based on the following content: "${pdfText}". Provide each in the format: "Q: "question?" "A: "answer"`
+                        "content": `Generate ${numOfFlashcards} flashcards with questions and answers based on the following content: "${pdfText}". Provide each in the format: "Q: [question]" "A: [answer]"`
                     }
                 ],
                 max_tokens: 500
