@@ -1,5 +1,4 @@
-const fetch = require('node-fetch');
-
+// Example modified code in generate-questions.js
 exports.handler = async (event, context) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -17,7 +16,6 @@ exports.handler = async (event, context) => {
 
     try {
         const apiKey = process.env.GPT4_MINI_API_KEY;
-
         if (!apiKey) {
             console.error('Error: Missing API key.');
             return {
@@ -27,9 +25,11 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Parse the request body to get the PDF text and the number of flashcards
-        const { pdfText, numberOfFlashcards } = JSON.parse(event.body);
+        const requestBody = JSON.parse(event.body);
+        const pdfText = requestBody.pdfText;
+        const numOfFlashcards = requestBody.numOfFlashcards;
 
+        // Make sure to generate the response in the correct format
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -40,9 +40,9 @@ exports.handler = async (event, context) => {
                 model: 'gpt-4o-mini',
                 messages: [
                     { "role": "system", "content": "You are a helpful assistant." },
-                    { "role": "user", "content": `Generate ${numberOfFlashcards} flashcards based on the following content: ${pdfText}` }
+                    { "role": "user", "content": `Generate ${numOfFlashcards} flashcards for the following text:\n\n${pdfText}` }
                 ],
-                max_tokens: 500 // Adjust as needed
+                max_tokens: 500
             })
         });
 
@@ -54,13 +54,20 @@ exports.handler = async (event, context) => {
 
         const data = await response.json();
 
-        // Extract the content from the response
-        const generatedContent = data.choices[0].message.content.trim();
+        // Here you need to parse the response and create an array of flashcards
+        // Example parsing logic (modify according to your API's response)
+        const flashcards = data.choices[0].message.content.split('\n---\n').map((cardText) => {
+            const [questionLine, answerLine] = cardText.split('\n');
+            return {
+                question: questionLine.replace('Q:', '').trim(),
+                answer: answerLine.replace('A:', '').trim()
+            };
+        });
 
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ flashcards: generatedContent })
+            body: JSON.stringify({ flashcards })
         };
     } catch (error) {
         console.error('Internal Server Error:', error.message);

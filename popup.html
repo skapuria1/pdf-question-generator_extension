@@ -1,20 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Flashcard Generator</title>
-    <link rel="stylesheet" href="popup.css">
+    <link rel="stylesheet" type="text/css" href="popup.css">
 </head>
 <body>
     <h1>PDF Flashcard Generator</h1>
-    <input type="file" id="uploadPdf" accept=".pdf">
-    <input type="number" id="flashcardCount" placeholder="Number of flashcards" min="1">
+    <input type="file" id="uploadPdf" accept="application/pdf">
+    <input type="number" id="numFlashcards" placeholder="Number of flashcards">
     <button id="uploadBtn">Generate Flashcards</button>
-    
     <div id="output"></div>
-    <div class="flashcard-container"></div>
-
     <script src="libs/pdf.js"></script>
     <script src="popup.js"></script>
 </body>
