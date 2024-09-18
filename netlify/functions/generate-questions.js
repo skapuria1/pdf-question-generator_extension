@@ -38,28 +38,29 @@ exports.handler = async (event, context) => {
                 model: 'gpt-4o-mini',
                 messages: [
                     { "role": "system", "content": "You are a helpful assistant." },
-                    { "role": "user", "content": `Generate ${numFlashcards} flashcards with questions and answers based on the following text: ${pdfText}` }
+                    { "role": "user", "content": "This is a connection test. Please confirm." }
                 ],
-                max_tokens: 1000
+                max_tokens: 10
             })
         });
-
+        
+        // Log the response text before parsing
+        const responseText = await response.text();
+        console.log('Full response:', responseText);
+        
+        // Attempt to parse the JSON
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error with GPT-4o Mini API request:', errorText);
+            console.error('Error with GPT-4o Mini API request:', responseText);
             throw new Error(`Error with GPT-4o Mini API: ${response.statusText}`);
         }
-
-        const data = await response.json();
-
-        // Assuming GPT-4 Mini response structure is in data.choices[0].message.content
-        const flashcards = JSON.parse(data.choices[0].message.content); // This assumes GPT returns JSON formatted flashcards
-
+        
+        const data = JSON.parse(responseText);
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ questions: flashcards })
+            body: JSON.stringify({ confirmation: data.choices[0].message.content.trim() })
         };
+        
     } catch (error) {
         console.error('Internal Server Error:', error.message);
         return {
