@@ -36,14 +36,13 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
         const data = await response.json();
         console.log('Response data:', data); // Debugging output
 
-        // Check if the response contains questions
-        if (!data.flashcards || !Array.isArray(data.flashcards)) {
-            throw new Error('Invalid response format: Expected an array of flashcards');
+        if (!Array.isArray(data.flashcards)) {
+            throw new Error('Invalid response format: Expected data.flashcards to be an array of flashcards');
         }
 
         // Generate the flashcards HTML
         const flashcardsHtml = generateFlashcardsHtml(data.flashcards);
-        
+
         // Give the user an option to download or view the HTML
         const download = confirm("Flashcards generated. Would you like to download them?");
         if (download) {
@@ -59,9 +58,13 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
 });
 
 // Function to generate flashcards HTML
-function generateFlashcardsHtml(flashcards) {
-    let flashcardsData = flashcards.map((fc, index) => `
-        { question: '${fc.question}', answer: '${fc.answer}' }`
+function generateFlashcardsHtml(questions) {
+    if (!questions || !Array.isArray(questions)) {
+        return '<p>Error: Invalid questions data received from the server.</p>';
+    }
+
+    let flashcardsData = questions.map((q, index) => `
+        { question: '${q.question || 'No question provided'}', answer: '${q.answer || 'No answer provided'}' }`
     ).join(',');
 
     return `
@@ -87,10 +90,10 @@ function generateFlashcardsHtml(flashcards) {
         </div>
         <div class="navigation">
             <button class="nav-button" id="prevBtn" onclick="prevCard()">Previous</button>
-            <button class="nav-button" id="nextBtn" onclick="nextCard()">Next</button>
+            <button class="nav-button" id="nextBtn">Next</button>
         </div>
         <div class="question-list">
-            ${flashcards.map((fc, index) => `<div onclick="goToCard(${index})">${index + 1}. ${fc.question}</div>`).join('')}
+            ${questions.map((q, index) => `<div onclick="goToCard(${index})">${index + 1}. ${q.question}</div>`).join('')}
         </div>
     </div>
 
@@ -146,6 +149,7 @@ function generateFlashcardsHtml(flashcards) {
 `;
 }
 
+
 // Function to prompt user to download HTML
 function downloadHtmlFile(htmlContent) {
     const blob = new Blob([htmlContent], { type: 'text/html' });
@@ -163,7 +167,6 @@ function viewInBrowser(htmlContent) {
     newWindow.document.write(htmlContent);
     newWindow.document.close();
 }
-
 // Function to extract text from the PDF file using PDF.js
 async function extractTextFromPdf(file) {
     return new Promise((resolve, reject) => {
