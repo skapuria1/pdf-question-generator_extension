@@ -17,7 +17,6 @@ exports.handler = async (event, context) => {
 
     try {
         const apiKey = process.env.GPT4_MINI_API_KEY;
-        const { pdfText, numFlashcards } = JSON.parse(event.body);
 
         if (!apiKey) {
             console.error('Error: Missing API key.');
@@ -27,6 +26,9 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({ error: 'Missing API key.' })
             };
         }
+
+        // Parse the request body to get the PDF text and the number of flashcards
+        const { pdfText, numberOfFlashcards } = JSON.parse(event.body);
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -38,29 +40,28 @@ exports.handler = async (event, context) => {
                 model: 'gpt-4o-mini',
                 messages: [
                     { "role": "system", "content": "You are a helpful assistant." },
-                    { "role": "user", "content": "This is a connection test. Please confirm." }
+                    { "role": "user", "content": `Generate ${numberOfFlashcards} flashcards based on the following content: ${pdfText}` }
                 ],
-                max_tokens: 10
+                max_tokens: 500 // Adjust as needed
             })
         });
-        
-        // Log the response text before parsing
-        const responseText = await response.text();
-        console.log('Full response:', responseText);
-        
-        // Attempt to parse the JSON
+
         if (!response.ok) {
-            console.error('Error with GPT-4o Mini API request:', responseText);
+            const errorText = await response.text();
+            console.error('Error with GPT-4o Mini API request:', errorText);
             throw new Error(`Error with GPT-4o Mini API: ${response.statusText}`);
         }
-        
-        const data = JSON.parse(responseText);
+
+        const data = await response.json();
+
+        // Extract the content from the response
+        const generatedContent = data.choices[0].message.content.trim();
+
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ confirmation: data.choices[0].message.content.trim() })
+            body: JSON.stringify({ flashcards: generatedContent })
         };
-        
     } catch (error) {
         console.error('Internal Server Error:', error.message);
         return {
